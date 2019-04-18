@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<extension key="be.kava.contributions" type="module">
+  <file>contributions</file>
+  <name>KAVA Contributions</name>
+  <description>Aanmaken van bijdragen</description>
+  <license>AGPL-3.0</license>
+  <maintainer>
+    <author>Alain Benbassat</author>
+    <email>alain@businessandcode.eu</email>
+  </maintainer>
+  <urls>
+    <url desc="Licensing">http://www.gnu.org/licenses/agpl-3.0.html</url>
+  </urls>
+  <releaseDate>2019-03-23</releaseDate>
+  <version>1.0</version>
+  <develStage>stable</develStage>
+  <compatibility>
+    <ver>5.0</ver>
+  </compatibility>
+  <comments>Surf naar civicrm/membershipcontributions om lidmaatschapsbijdragen aan te maken.</comments>
+  <civix>
+    <namespace>CRM/Contributions</namespace>
+  </civix>
+</extension>
