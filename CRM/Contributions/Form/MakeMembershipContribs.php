@@ -20,8 +20,10 @@ class CRM_Contributions_Form_MakeMembershipContribs extends CRM_Core_Form {
   public function buildQuickForm() {
     $defaults = [];
 
+    $this->setTitle('Aanmaken van lidmaatschapsbijdragen');
+
     // add list of membership types
-    $this->add('select','membership_type','1. Soort lidmaatschap',CRM_Member_PseudoConstant::membershipType(),TRUE);
+    $this->add('select','membership_type','1. Soort lidmaatschap',[0 => '--- KIES EEN SOORT LIDMAATSCHAP ---'] + CRM_Member_PseudoConstant::membershipType(),TRUE);
 
     // add text field for year
     $this->add('text', 'year', '2. Jaar');
@@ -68,12 +70,31 @@ class CRM_Contributions_Form_MakeMembershipContribs extends CRM_Core_Form {
   public static function formRule($fields, $files, $form) {
     $errors = [];
 
+    // validate the membership type
+    if ($fields['membership_type'] == 0) {
+      $errors['membership_type'] = 'Kies een soort lidmaatschap';
+    }
+
     // validate the submitted year
     if (CRM_Utils_Type::validate($fields['year'], 'Integer', FALSE) && $fields['year'] >= 1900 && $fields['year'] <= 3000) {
       //OK, valid year
     }
     else {
       $errors['year'] = 'Dit moet een geldig jaartal zijn (tussen 1900 en 3000)';
+    }
+
+    // validate the month from/to
+    if (CRM_Utils_Type::validate($fields['start_month_from'], 'Integer', FALSE)
+      && CRM_Utils_Type::validate($fields['start_month_end'], 'Integer', FALSE)
+      && $fields['start_month_from'] >= 1
+      && $fields['start_month_from'] <= 12
+      && $fields['start_month_end'] >= 1
+      && $fields['start_month_end'] <= 12
+      && $fields['start_month_end'] >= $fields['start_month_from']) {
+      //OK, valid year
+    }
+    else {
+      $errors['start_month_from'] = '"Van" en "tot" moeten een getal zijn tussen 1 en 12, en "tot" moet groter of gelijk zijn aan "van"';
     }
 
     // validate the amount
@@ -100,7 +121,7 @@ class CRM_Contributions_Form_MakeMembershipContribs extends CRM_Core_Form {
       $this->runQueue();
     }
     else {
-      CRM_Core_Session::setStatus('Geen lidmaatschappen gevonden.', 'MakeMembershipContribs', 'warning');
+      CRM_Core_Session::setStatus('Geen lidmaatschappen gevonden.', 'Aanmaken lidmaatschapsbijdragen', 'warning');
     }
 
     parent::postProcess();
