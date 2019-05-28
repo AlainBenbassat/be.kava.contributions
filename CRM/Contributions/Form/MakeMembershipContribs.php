@@ -27,9 +27,19 @@ class CRM_Contributions_Form_MakeMembershipContribs extends CRM_Core_Form {
     $this->add('text', 'year', '2. Jaar');
     $defaults['year'] = 2019;
 
+    // add start date month
+    $this->add('text', 'start_month_from', '3. Maand startdatum van', ['size' => 3]);
+    $defaults['start_month_from'] = '1';
+    $this->add('text', 'start_month_end', 'tot en met', ['size' => 3]);
+    $defaults['start_month_end'] = '3';
+
     // add text field for amount
-    $this->add('text', 'amount', '3. Bedrag van de bijdrage');
+    $this->add('text', 'amount', '4. Bedrag van de bijdrage');
     $defaults['amount'] = 1;
+
+    // add text field for description
+    $this->add('text', 'description', '5. Omschrijving', ['size' => 80]);
+    $defaults['description'] = 'Abonnement';
 
     // add the buttons
     $this->addButtons([
@@ -99,27 +109,44 @@ class CRM_Contributions_Form_MakeMembershipContribs extends CRM_Core_Form {
   private function fillQueue($values) {
     // select all valid memberships of the given type in the given period
     // without contribution
+    // By valid:
+    //   - start date must be this year or earlier
+    //   - end date must be >= 31/12 of this year
+    //     if the end date is another date this year it is assumed the membership was charged the
+    //     previous year, and was cancelled. For end date = 31/12, membership will be charged
     $sql = "
       select
         m.id
       from
         civicrm_membership m
-      left outer join
-        civicrm_membership_payment mp on mp.membership_id = m.id
-      left outer join
-        civicrm_contribution c on mp.contribution_id = c.id and year(c.receive_date) = %2
       where 
         m.membership_type_id = %1
       and
-        year(m.join_date) <= %2
+        year(m.start_date) <= %2
       and
-	      year(m.end_date) >= %2
+	      m.end_date >= %3
+	    and
+	      month(m.start_date) between %4 and %5
 	    and 
-        mp.id IS NULL
+	      m.owner_membership_id is null
+	    and 
+        not exists (
+          select 
+            *
+          from
+            civicrm_membership_payment mp  
+          inner join
+            civicrm_contribution c on mp.contribution_id = c.id and year(c.receive_date) = 2019
+          where 
+            mp.membership_id = m.id
+        )
     ";
     $sqlParams = [
       1 => [$values['membership_type'], 'Integer'],
       2 => [$values['year'], 'Integer'],
+      3 => [$values['year'] . '-12-31', 'String'],
+      4 => [$values['start_month_from'], 'Integer'],
+      5 => [$values['start_month_end'], 'Integer'],
     ];
     $dao = CRM_Core_DAO::executeQuery($sql, $sqlParams);
 
@@ -127,7 +154,7 @@ class CRM_Contributions_Form_MakeMembershipContribs extends CRM_Core_Form {
       // add them to the queue
       $task = new CRM_Queue_Task(
         ['CRM_Contributions_Form_MakeMembershipContribs', 'createMembershipContribution'],
-        [$dao->id, $values['year'], $values['amount']]
+        [$dao->id, $values['year'], $values['amount'], $values['description']]
       );
       $this->queue->createItem($task);
     }
@@ -145,7 +172,7 @@ class CRM_Contributions_Form_MakeMembershipContribs extends CRM_Core_Form {
     $runner->runAllViaWeb();
   }
 
-  public static function createMembershipContribution(CRM_Queue_TaskContext $ctx, $membershipID, $year, $amount) {
+  public static function createMembershipContribution(CRM_Queue_TaskContext $ctx, $membershipID, $year, $amount, $description) {
     // get the membership
     $sql = "
       select 
@@ -156,7 +183,7 @@ class CRM_Contributions_Form_MakeMembershipContribs extends CRM_Core_Form {
       left outer join  
         civicrm_value_facturatie_79 f on f.entity_id = m.id
       where 
-        id = $membershipID
+        m.id = $membershipID
     ";
     $membership = CRM_Core_DAO::executeQuery($sql);
     if ($membership->fetch()) {
@@ -164,9 +191,9 @@ class CRM_Contributions_Form_MakeMembershipContribs extends CRM_Core_Form {
       $params = [
         'contact_id' => $membership->betaler_id ? $membership->betaler_id : $membership->contact_id,
         'financial_type_id' => 2,
-        'receive_date' => "$year-01-01 12:00:00",
         'total_amount' => $amount,
-        'contribution_status_id' => 1,
+        'contribution_status_id' => 2,
+        'contribution_source' => $description,
         'sequential' => 1,
       ];
       $contribution = civicrm_api3('Contribution', 'create', $params);
