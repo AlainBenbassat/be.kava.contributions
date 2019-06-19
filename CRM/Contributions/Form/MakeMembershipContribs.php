@@ -199,10 +199,14 @@ class CRM_Contributions_Form_MakeMembershipContribs extends CRM_Core_Form {
       select 
         m.*
         , f.betaler_257 betaler_id
+        , f.product_261 product_code
+        , ifnull(a.hoeveelheid_138, 1) hoeveelheid
       from
         civicrm_membership m
       left outer join  
         civicrm_value_facturatie_79 f on f.entity_id = m.id
+      left outer join
+        civicrm_value_aft_abonnement_26 a on a.entity_id = m.id
       where 
         m.id = $membershipID
     ";
@@ -236,6 +240,25 @@ class CRM_Contributions_Form_MakeMembershipContribs extends CRM_Core_Form {
         'contribution_id' => $contribution['id'],
       ];
       civicrm_api3('MembershipPayment', 'create', $params);
+
+      // update the contribution line item: store the product code
+      if ($membership->product_code) {
+        $sqlLineItem = "
+          update
+            civicrm_line_item
+          set 
+            label = %2
+            , qty = %3
+          where
+            contribution_id = %1
+        ";
+        $sqlLineItemParams = [
+          1 => [$contribution['id'], 'Integer'],
+          2 => [$membership->product_code, 'String'],
+          3 => [$membership->hoeveelheid, 'Integer'],
+        ];
+        CRM_Core_DAO::executeQuery($sqlLineItem, $sqlLineItemParams);
+      }
     }
 
     return TRUE;

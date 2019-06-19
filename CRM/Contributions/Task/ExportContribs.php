@@ -69,15 +69,15 @@ class CRM_Contributions_Task_ExportContribs extends CRM_Contribute_Form_Task {
     $sql = "
       select 
          round(cx.klantnummer_kava_203 / 10, 0) apbnr,
-         cx.klantnummer_kava_203 - (round(cx.klantnummer_kava_203 / 10, 0) * 10) overname,
+         if(length(x.klantnummer_kava_203) < 7, -1, cx.klantnummer_kava_203 - (round(cx.klantnummer_kava_203 / 10, 0) * 10)) overname,
          year(cb.receive_date) jaar,
          month(cb.receive_date) maand, 
-         '???' oorspr,
+         'bijdrage CiviCRM' oorspr,
          cb.id refnr,
          0 as waarde,
-         0 hoevh,
-         0 product,
-         '???' omschrijving,
+         li.qty hoevh,
+         li.label product,
+         concat(cb.source, ': ', ifnull(cbscont.display_name, c.display_name)) omschrijving,
          0 username,
          0 prog,
          NOW() creatdate,
@@ -90,6 +90,12 @@ class CRM_Contributions_Task_ExportContribs extends CRM_Contribute_Form_Task {
         civicrm_value_contact_extra cx on cx.entity_id = c.id
       inner join
         civicrm_contribution cb on c.id = cb.contact_id
+      left outer join
+        civicrm_line_item li on li.contribution_id = cb.id
+      left outer join
+        civicrm_contribution_soft cbs on cbs.contribution_id = cb.id
+      left outer join
+        civicrm_contact cbscont on cbscont.id = cbs.contact_id
       where
         cb.id in (" . implode(',', $this->_contributionIds) . ")      
     ";
