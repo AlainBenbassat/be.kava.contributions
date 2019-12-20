@@ -140,6 +140,8 @@ class CRM_Contributions_Form_MakeMembershipContribs extends CRM_Core_Form {
         m.id
       from
         civicrm_membership m
+      join
+        civicrm_value_facturatie_79 f on m.id=f.entity_id
       where 
         m.membership_type_id = %1
       and
@@ -150,6 +152,8 @@ class CRM_Contributions_Form_MakeMembershipContribs extends CRM_Core_Form {
 	      month(m.start_date) between %4 and %5
 	    and 
 	      m.owner_membership_id is null
+            and
+              f.gratis__260=0
 	    and 
         not exists (
           select 
