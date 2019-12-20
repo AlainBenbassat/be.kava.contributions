@@ -43,8 +43,7 @@ class CRM_Contributions_Task_ExportContribs extends CRM_Contribute_Form_Task {
   public function postProcess() {
     // we work with sqlColumns and headerRows to match the regular and Excel export format
     $sqlColumns = [];
-    $sqlColumns['apbnr'] = 'apbnr int';
-    $sqlColumns['overname'] = 'overname int';
+    $sqlColumns['klantnummer'] = 'klantnummer int';
     $sqlColumns['jaar'] = 'jaar int';
     $sqlColumns['maand'] = 'maand int';
     $sqlColumns['oorspr'] = 'oorspr varchar(255)';
