@@ -43,7 +43,8 @@ class CRM_Contributions_Task_ExportContribs extends CRM_Contribute_Form_Task {
   public function postProcess() {
     // we work with sqlColumns and headerRows to match the regular and Excel export format
     $sqlColumns = [];
-    $sqlColumns['klantnummer'] = 'klantnummer int';
+    $sqlColumns['apbnr'] = 'apbnr int';
+    $sqlColumns['overname'] = 'overname int';
     $sqlColumns['jaar'] = 'jaar int';
     $sqlColumns['maand'] = 'maand int';
     $sqlColumns['oorspr'] = 'oorspr varchar(255)';
@@ -67,7 +68,8 @@ class CRM_Contributions_Task_ExportContribs extends CRM_Contribute_Form_Task {
     // select the contributions
     $sql = "
       select 
-         cx.klantnummer_kava_203 klantnummer,
+         if(length(cx.klantnummer_kava_203) < 7, cx.klantnummer_kava_203, round(cx.klantnummer_kava_203 / 10, 0)) apbnr,
+         if(length(cx.klantnummer_kava_203) < 7, -1, cx.klantnummer_kava_203 - (round(cx.klantnummer_kava_203 / 10, 0) * 10)) overname,
          year(cb.receive_date) jaar,
          month(cb.receive_date) maand, 
          'bijdrage CiviCRM' oorspr,
