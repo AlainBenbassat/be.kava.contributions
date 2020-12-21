@@ -68,8 +68,8 @@ class CRM_Contributions_Task_ExportContribs extends CRM_Contribute_Form_Task {
     // select the contributions
     $sql = "
       select 
-         if(length(cx.klantnummer_kava_203) < 7, cx.klantnummer_kava_203, round(cx.klantnummer_kava_203 / 10, 0)) apbnr,
-         if(length(cx.klantnummer_kava_203) < 7, -1, cx.klantnummer_kava_203 - (round(cx.klantnummer_kava_203 / 10, 0) * 10)) overname,
+         if(cx.klantnummer_kava_203 < 1000000, cx.klantnummer_kava_203, round(cx.klantnummer_kava_203 / 10, 0)) apbnr,
+         if(cx.klantnummer_kava_203 < 1000000, -1, cx.klantnummer_kava_203 - (round(cx.klantnummer_kava_203 / 10, 0) * 10)) overname,
          year(cb.receive_date) jaar,
          month(cb.receive_date) maand, 
          'bijdrage CiviCRM' oorspr,
