@@ -27,7 +27,7 @@ class CRM_Contributions_Form_MakeMembershipContribs extends CRM_Core_Form {
 
     // add text field for year
     $this->add('text', 'year', '2. Jaar');
-    $defaults['year'] = 2019;
+    $defaults['year'] = date('Y');
 
     // add start date month
     $this->add('text', 'start_month_from', '3. Maand startdatum van', ['size' => 3]);
@@ -161,7 +161,7 @@ class CRM_Contributions_Form_MakeMembershipContribs extends CRM_Core_Form {
           from
             civicrm_membership_payment mp  
           inner join
-            civicrm_contribution c on mp.contribution_id = c.id and year(c.receive_date) = 2019
+            civicrm_contribution c on mp.contribution_id = c.id and year(c.receive_date) = %2
           where 
             mp.membership_id = m.id
         )
